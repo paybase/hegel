@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
 
-apk add --no-cache curl zip
+sudo apt-get update
+sudo apt-get install -y zip
 filename=hegel-$CIRCLE_TAG-x86-linux.zip
 zip $filename target/x86_64-unknown-linux-musl/release/hegel
 
