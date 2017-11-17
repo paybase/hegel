@@ -1,0 +1,10 @@
+[package]
+name = "hegel"
+version = "0.1.0"
+authors = ["Joel Pickup <joel@paybase.io>"]
+description = "process manager"
+
+[dependencies]
+clap = "2.27.1"
+shared_child = "0.3.2"
+log = "0.3"
