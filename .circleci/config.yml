@@ -6,10 +6,14 @@ jobs:
     working_directory: /home/rust/src
     steps:
       - checkout
-       
+
       - run:
           name: build
           command: cargo build --release
+
+      - deploy:
+          name: create deployment
+          command: ./build/deploy.sh
 
 # hack for circleci 2
 deployment:
