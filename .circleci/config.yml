@@ -1,0 +1,23 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ekidd/rust-musl-builder
+    working_directory: /home/rust/src
+    steps:
+      - checkout
+
+      - run:
+          name: build
+          command: cargo build --release
+
+      - deploy:
+          name: create deployment
+          command: ./build/deploy.sh
+
+# hack for circleci 2
+deployment:
+  such_hacks_so_wow:
+    tag: /.*/
+    commands:
+      - echo "make tags run in 2.0"

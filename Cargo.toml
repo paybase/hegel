@@ -1,0 +1,8 @@
+[package]
+name = "hegel"
+version = "0.1.0"
+authors = ["Joe Harlow <joe@paybase.io>", "Joel Pickup <joel@paybase.io>"]
+description = "process manager"
+
+[dependencies]
+clap = "2.27.1"
