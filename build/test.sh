@@ -2,6 +2,7 @@
 cargo run -- \
   -p "sh ./test/test.sh 5" \
   -p "sh ./test/test.sh 10"
+  -t 1
 
 if [ $? = 1 ]; then
   echo "test successful"
