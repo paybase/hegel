@@ -8,6 +8,10 @@ jobs:
       - checkout
 
       - run:
+          name: test
+          command: cargo run -- -p "sh ./test/test.sh 5" "sh ./test/test.sh 10"
+
+      - run:
           name: build
           command: cargo build --release
 
