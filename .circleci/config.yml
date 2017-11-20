@@ -9,7 +9,7 @@ jobs:
 
       - run:
           name: test
-          command: cargo run -- -p "sh ./test/test.sh 5" "sh ./test/test.sh 10"
+          command: ./build/test.sh 
 
       - run:
           name: build
