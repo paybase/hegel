@@ -16,10 +16,12 @@ GHR_SHA256=6f3cff97000fc643019e66f13252300afd531fea347e61949fedfba7e20405a1
 GHR_URL=https://github.com/tcnksm/ghr/releases/download/v${GHR_VERSION}/ghr_v${GHR_VERSION}_linux_amd64.zip
 
 filename=hegel-$CIRCLE_TAG-x86-linux.tar.gz
-tar -zcf $filename -C target/x86_64-unknown-linux-musl/release hegel
+mkdir -p release
+tar -zcf release/$filename -C target/x86_64-unknown-linux-musl/release hegel
+echo "$(openssl dgst -sha256 "release/$filename") - $filename" > release/SHASUM
 
 curl -Lk $GHR_URL -o ghr.zip
 ensure_sha256 ghr.zip $GHR_SHA256
 unzip ghr.zip
 
-./ghr -u paybase -r hegel $CIRCLE_TAG $filename
+./ghr -u paybase -r hegel $CIRCLE_TAG release/
