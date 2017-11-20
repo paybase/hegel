@@ -8,8 +8,8 @@ jobs:
       - checkout
 
       - run:
-          name: build
-          command: cargo build --release
+          name: test
+          command: ./build/test.sh 
 
       - deploy:
           name: create deployment

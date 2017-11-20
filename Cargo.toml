@@ -1,8 +1,9 @@
 [package]
 name = "hegel"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Joe Harlow <joe@paybase.io>", "Joel Pickup <joel@paybase.io>"]
-description = "process manager"
+description = "Simple, lightweight multi-process manager for containers"
 
 [dependencies]
 clap = "2.27.1"
+libc = "0.2.33"

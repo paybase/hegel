@@ -1,7 +1,8 @@
 use clap::{Arg, App, ArgMatches};
+use libc::{getpid};
 
 pub fn print(log: &str) {
-  println!("[ hegel ] {}", log);
+  println!("[hegel ({})] {}", unsafe { getpid() }, log);
 }
 
 pub fn get_arguments<'a>() -> ArgMatches<'a> {
@@ -17,6 +18,11 @@ pub fn get_arguments<'a>() -> ArgMatches<'a> {
         .takes_value(true)
         .required(true)
         .multiple(true))
+      .arg(Arg::with_name("timeout")
+        .short("t")
+        .long("timeout")
+        .help("Set the maximum time hegel should wait before killing a process in seconds, defaults to 5")
+        .takes_value(true))
       .get_matches();
 
   matches
