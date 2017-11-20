@@ -1,13 +1,21 @@
 use std::io::{self, BufReader, Error};
 use std::sync::mpsc;
-use std::thread;
+use std::{thread, time};
 use std::io::prelude::*;
 use std::process::{exit, Command, Child, Stdio};
 use utils::{print};
+use libc::{kill, SIGTERM};
 
-pub enum Msg {
+enum Msg {
   StdErr(Option<String>),
   StdOut(Option<String>),
+}
+
+#[derive(PartialEq)]
+enum Status {
+  Running,
+  Killing,
+  Killed,
 }
 
 pub struct Process {
@@ -15,14 +23,15 @@ pub struct Process {
   pub arguments: Vec<String>,
   pub process: Child,
   tx: mpsc::Sender<Msg>,
-  pub rx: mpsc::Receiver<Msg>,
+  rx: mpsc::Receiver<Msg>,
+  status: Status,
 }
 
 impl Process {
   pub fn new(cmd: &str, args: &Vec<&str>) -> Result<Process, Error> {
     let command = cmd.to_owned();
     let arguments = args.iter()
-      .map(|s|s.to_string())
+      .map(|s| s.to_string())
       .collect();
     
     let (tx, rx) = mpsc::channel::<Msg>();
@@ -37,6 +46,7 @@ impl Process {
         arguments,
         process: child,
         tx, rx,
+        status: Status::Running,
       }),
       Err(e) => Err(e),
     }
@@ -74,32 +84,58 @@ pub fn check_procs(pids: &mut Vec<Process>) -> i32 {
     for ps in pids.iter_mut() {
       match ps.rx.try_recv() {
         Ok(Msg::StdOut(Some(string))) => {
-          let out = format!("[ {}({}) ] {}\n", ps.command, ps.process.id(), string);
+          let out = format!("[{} ({})] {}\n", ps.command, ps.process.id(), string);
           io::stdout().write(out.as_bytes())
             .expect("should be able to send to stdout");;
         },
         Ok(Msg::StdErr(Some(string))) => {
-          let out = format!("[ {}({}) ] {}\n", ps.command, ps.process.id(), string);
+          let out = format!("[{} ({})] {}\n", ps.command, ps.process.id(), string);
           io::stderr().write(out.as_bytes())
             .expect("should be able to send to stderr");
         },
         _ => ()
       }
       if let Ok(Some(status)) = ps.process.try_wait() {
-        print(&format!("{}({}) exited with status {}", ps.command, ps.process.id(), status));
+        print(&format!("{} ({}) exited with status {}", ps.command, ps.process.id(), status));
+        ps.status = Status::Killed;
         return status.code().unwrap();
       }
     }
   }
 }
 
-pub fn kill_procs(mut pids: Vec<Process>, status: i32) {
+pub fn kill_procs(mut pids: Vec<Process>, status: i32, timeout: u64) {
+  let now = time::Instant::now();
+
   for ps in pids.iter_mut() {
-    if let Ok(None) = ps.process.try_wait() {
-      print(&format!("attempting to kill {}({})", ps.command, ps.process.id()));
-        ps.process.kill().expect("should kill process")
-      }
+    if let Status::Running = ps.status {
+      print(&format!("attempting to terminate {} ({})", ps.command, ps.process.id()));
+      unsafe { kill(ps.process.id() as i32, SIGTERM) };
+    }
   }
+
+  loop {
+    if pids.iter().all(|p| p.status == Status::Killed) { break };
+    for ps in pids.iter_mut() {
+      match ps.process.try_wait() {
+        Ok(Some(status)) => {
+          if let Status::Killed = ps.status { continue };
+          print(&format!("{} ({}) exited with status {}", ps.command, ps.process.id(), status));
+          ps.status = Status::Killed;
+        },
+        Ok(None) => {
+          if now.elapsed().as_secs() > timeout {
+            if let Status::Killing = ps.status { continue };
+            print(&format!("{} ({}) did not gracefully shutdown, killing", ps.command, ps.process.id()));
+            ps.process.kill().expect("should kill child");
+            ps.status = Status::Killing;
+          }
+        },
+        _ => () 
+      }
+    }
+  }
+
   match status {
     0 => exit(1),
     s => exit(s),

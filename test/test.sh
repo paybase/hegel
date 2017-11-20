@@ -16,6 +16,8 @@ fi
 
 err "check stderr"
 
+trap 'echo "Be patient"' TERM
+
 i=1
 while [ "$i" -le "$iterations" ]; do
   log "iteration: $i"

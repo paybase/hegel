@@ -6,3 +6,4 @@ description = "process manager"
 
 [dependencies]
 clap = "2.27.1"
+libc = "0.2.33"

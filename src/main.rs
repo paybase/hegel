@@ -1,4 +1,5 @@
 extern crate clap;
+extern crate libc;
 
 mod utils;
 mod process;
@@ -8,6 +9,7 @@ use process::{Process, check_procs, kill_procs};
 
 fn main() {
   let args = get_arguments();
+  let timeout = args.value_of("timeout").unwrap_or("5").parse::<u64>().unwrap();
   let vals = parse_arguments(&args);
   let mut pids: Vec<Process> = Vec::new();
 
@@ -20,11 +22,11 @@ fn main() {
       },
       Err(_) => {
         print(&format!("failed to spawn {} with arguments {:?}", cmd, args));
-        return kill_procs(pids, 1);
+        return kill_procs(pids, 1, timeout);
       }
     }
   }
 
   let status = check_procs(&mut pids);
-  kill_procs(pids, status)
+  kill_procs(pids, status, timeout)
 }
